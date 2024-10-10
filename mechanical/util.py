@@ -14,7 +14,21 @@ def air_density_and_specific_weight_SI(temperature_C):
         [5.14,4.55,4.08,3.92,3.84,3.76,3.69,3.62,3.56,3.50,3.43,3.38,3.32,3.21,3.12,3.02,2.85,2.70,2.51,2.33,2.22,2.10,2.01,1.76,1.52,1.32,1.16,1.03,0.94,0.86,0.80,0.75]
     ]
 
+def calculate_air_pressure(h):
+    """
+    Calculate the air pressure of sea level between -500m to 10000m.
 
+    Parameters:
+    h (float): Height above sea level in meters.
+
+    Returns:
+    float: Air pressure in Pascals.
+    """
+    if (h < -500) or (h > 10000):
+        p0 = 101325  # Sea level standard atmospheric pressure in Pascals
+        return p0 * (1 - 2.25577e-5 * h) ** 5.25588
+    else:
+       raise ValueError("Altitude must between -500m and 10000m.") 
 
 def roundup(value, closest_to):
     return ((value//closest_to)*closest_to + closest_to)
@@ -68,8 +82,8 @@ area = duct_area(q,v)
 duct_dia = roundup((round_duct_dia(duct_area(q,v))),0.05)
 
 #print(equivalent_length(duct_dia, duct_dia-0.05))
-print(area)
-print(duct_dia * duct_dia-0.05)
-
+#print(area)
+#print(duct_dia * duct_dia-0.05)
+calculate_air_pressure(-500)
 
 #print(equivalent_length(0.5,0.4))
