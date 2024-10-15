@@ -1,3 +1,4 @@
+import numpy as np
 import math
 
 def air_density_and_specific_weight_SI(temperature_C):
@@ -26,7 +27,7 @@ def calculate_air_pressure(h):
     """
     if (h < -500) or (h > 10000):
         p0 = 101325  # Sea level standard atmospheric pressure in Pascals
-        return p0 * (1 - 2.25577e-5 * h) ** 5.25588
+        return (p0 * (1 - 2.25577e-5 * h) ** 5.25588)
     else:
        raise ValueError("Altitude must between -500m and 10000m.") 
 
@@ -74,6 +75,80 @@ def calculate_hydraulic_diameter_rectangular(height, width):
     """
     hydraulic_diameter = 2 * (height * width) / (height + width)
     return hydraulic_diameter
+
+
+def f_calc_turb_secant(Re,rel_roughness):
+    
+
+    # Secant method to calculate friction factor of Colebrook's equation
+
+    f=[]
+    fx=[]
+    fp=[]
+    f.append(pow((1/(-1.8*np.log10(6.9/Re+pow(rel_roughness/3.7,1.11)))),2)) # Haaland's equation for first guess
+    #print("f[0]=", f[0])
+    fx.append(-2*np.log10(rel_roughness/3.7+2.51/Re/pow(f[0],0.5))-1/pow(f[0],0.5))
+    #print("fx[0]=", fx[0])
+    fp.append(0)
+    #print("fp[0]=", fp[0])
+    f.append(f[0] + 0.01) # small pertubation for second guess
+    #print("f[1]=", f[1])
+    fx.append(-2*np.log10(rel_roughness/3.7+2.51/Re/pow(f[1],0.5))-1/pow(f[1],0.5))
+    fp.append((fx[0]-fx[1])/(f[0]-f[1]))
+    i = 1
+
+    while (f[i]-f[i-1]) != 0:
+        if fx[i] == 0:
+            f.append(f[i])
+        else:
+            f.append(f[i]-fx[i]/((fx[i-1]-fx[i])/(f[i-1]-f[i])))
+        fx.append(-2*np.log10(rel_roughness/3.7+2.51/Re/pow(f[i+1],0.5))-1/pow(f[i+1],0.5))
+        fp.append((fx[i-1]-fx[i])/(f[i-1]-f[i]))
+        #print("f=", f[i+1])
+        i = i + 1
+
+    return f[i]
+
+
+def f_calc_turb_NR(Re,rel_roughness):
+    # Newton-Raphson method to calculate friction factor of Colebrook's equation
+
+    f=[]
+    fx=[]
+    fp=[]
+    f.append(pow((1/(-1.8*np.log10(6.9/Re+pow(rel_roughness/3.7,1.11)))),2))
+    #print("f[0]=", f[0])
+    fx.append(-2*np.log10(rel_roughness/3.7+2.51/Re/pow(f[0],0.5))-1/pow(f[0],0.5))
+    #print("fx[0]=", fx[0])
+    fp.append(-0.5*pow(f[0],-1.5)+2*(-0.5*2.51/Re*pow(f[0],-1.5)/(math.log(10)*(rel_roughness/3.7+2.51/Re*pow(f[0],-0.5)))))
+    #print("fp[0]=", fp[0])
+
+    f.append(f[0] -(fx[0]/fp[0]))
+    #print("f[1]=", f[1])
+    fx.append(-2*np.log10(rel_roughness/3.7+2.51/Re/pow(f[1],0.5))-1/pow(f[1],0.5))
+    fp.append(-0.5*pow(f[1],-1.5)+2*(-0.5*2.51/Re*pow(f[1],-1.5)/(math.log(10)*(rel_roughness/3.7+2.51/Re*pow(f[1],-0.5)))))
+    i = 1
+
+    while (f[i]-f[i-1]) != 0:
+        if fx[i] == 0:
+            f.append(f[i])
+        else:
+            f.append(f[i]-fx[i]/((fx[i-1]-fx[i])/(f[i-1]-f[i])))
+        fx.append(-2*np.log10(rel_roughness/3.7+2.51/Re/pow(f[i+1],0.5))-1/pow(f[i+1],0.5))
+        fp.append((fx[i-1]-fx[i])/(f[i-1]-f[i]))
+        #print("f=", f[i+1])
+        i = i + 1
+
+    return f[i]    
+    
+def f_calc_churchill(Re,rel_roughness):
+    # Churchill explicit equation to calculate friction factor
+    
+    A=pow(2.457*math.log(1/(0.27*rel_roughness+pow(7/Re,0.9))),16)
+    B=pow(37530/Re,16)
+    f=8*pow(pow(8/Re,12)+1/pow(A+B,1.5),1/12)
+    return f  
+
 
 q = 0.4
 v = 2
